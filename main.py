@@ -76,8 +76,8 @@ class Game:
                 if event.key == pg.K_DOWN:
                     self.player.move(dy=1, direction=Direction.DOWN)
                 for mob in self.mobs:
-                    mob.move_towards_player(self.player.x, self.player.y)
-
+                    mob.move_towards_player(player=(self.player.x, self.player.y))
+                 
     def show_start_screen(self):
         pass
 
