@@ -77,9 +77,7 @@ class Game:
                     self.player.move(dy=1, direction=Direction.DOWN)
                 if self.player.moves > 0 and self.player.moves % 2 == 0:
                     for mob in self.mobs:
-                        mob.move_towards_player(player=(self.player.x, self.player.y))
-
-                
+                        mob.move_towards_player(player=(self.player.x, self.player.y)) 
             
     def show_start_screen(self):
         pass

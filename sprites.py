@@ -32,6 +32,9 @@ class Player(pg.sprite.Sprite):
         self.x = x
         self.y = y
 
+        self.next_move = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+        self.invalid_moves = []
+
     def move(self, dx=0, dy=0, direction=Direction.DOWN):
         if not self.collide_with_walls(dx, dy):
             self.x += dx
@@ -39,6 +42,16 @@ class Player(pg.sprite.Sprite):
             self.direction = direction
             self.image = self.image_directions[direction]
             self.moves += 1
+            self.invalid_moves = []
+        
+            for mob in self.game.mobs:
+                for player_move in self.next_move:
+                    next_player_position = (self.x + player_move[0], self.y + player_move[1])
+
+                    if mob.x == next_player_position[0]+1 and mob.y == next_player_position[1]+1:
+                        self.invalid_moves.append(next_player_position)
+                        
+            print(self.invalid_moves)
 
     def collide_with_walls(self, dx=0, dy=0):
         for wall in self.game.walls:
@@ -49,6 +62,12 @@ class Player(pg.sprite.Sprite):
     def update(self):
         self.rect.x = self.x * TILESIZE
         self.rect.y = self.y * TILESIZE
+        
+        invalid_image = pg.image.load("assets/invalid.png")
+        invalid_image = pg.transform.scale(invalid_image, (TILESIZE, TILESIZE))
+
+        for move in self.invalid_moves:
+            self.game.screen.blit(invalid_image, (move[0]*TILESIZE, move[1]*TILESIZE))
 
 class Mob(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -72,21 +91,6 @@ class Mob(pg.sprite.Sprite):
         neighbors = [node for node in neighbors if not self.collide_with_walls(node)]
         return neighbors
 
-    # def breadth_first_search(self, player):
-    #     start = (self.x, self.y)
-    #     frontier = deque()
-    #     frontier.append(start)
-    #     path = {}
-    #     while len(frontier) > 0:
-    #         current = frontier.popleft()
-    #         if current == player:
-    #             break
-    #         for next in self.find_neighbors(current):
-    #             if next not in path:
-    #                 frontier.append(next)
-    #                 path[next] = (current[0] - next[0], current[1] - next[1])
-    #     return path
-
     def breadth_first_search(self, start, end, path=[], exclude=[]):
         if start == end:
             return path
@@ -105,16 +109,14 @@ class Mob(pg.sprite.Sprite):
                 continue
             d = abs(neighbor[0] - end[0]) + abs(neighbor[1] - end[1])
             neighbors_d[neighbor] = d
+        if not neighbors_d:
+            return {}
         min_d = min(neighbors_d, key=neighbors_d.get)
-        print("Possible neighbors: {}".format(neighbors_d))
-
         path.append(min_d)
         return self.breadth_first_search(min_d, end, path)
 
     def move_towards_player(self, player):
         current = (self.x, self.y)
-
-        print("Player: {}, Mob: {}".format(player, current))
 
         path = self.breadth_first_search(current, player, path=[])
         if len(path) > 0:
@@ -122,29 +124,6 @@ class Mob(pg.sprite.Sprite):
             if not (next[0] == player[0] and next[1] == player[1]):
                 self.x = path[0][0]
                 self.y = path[0][1]
-    
-
-#    def move_towards_player(self, player_x, player_y):
-#         shortest_distance = (HEIGHT*WIDTH)/TILESIZE
-#         best_direction = None
-#         # check_if_wall = False
-
-#         for key, value in mob_directions.items():
-#             new_position = (self.x + value[0], self.y + value[1])
-#             if self.collide_with_walls(dx=new_position[0], dy=new_position[1]):
-#                 continue
-#             d = sqrt((player_x-new_position[0])**2+(player_y-new_position[1])**2)
-#             if d < shortest_distance:
-#                 shortest_distance = d
-#                 best_direction = key
-#             print(d)
-#             print(shortest_distance)
-#             print(best_direction)
-
-#         if best_direction != None:
-#             self.x += mob_directions[best_direction][0]
-#             self.y += mob_directions[best_direction][1]
-#             print("{},{}".format(self.x, self.y))
 
     def collide_with_walls(self, node):
         for wall in self.game.walls:
