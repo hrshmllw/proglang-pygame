@@ -1,9 +1,9 @@
-from cmath import sqrt
+from re import I
+from tkinter import W
 import pygame as pg
 from pygame.constants import DROPTEXT
 from settings import *
 from enum import Enum
-from math import sqrt
 from collections import deque
 
 class Direction(Enum):
@@ -61,45 +61,65 @@ class Mob(pg.sprite.Sprite):
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
 
-        self.connections = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+        self.directions = [(-1, 0), (1, 0), (0, 1), (0, -1)]
 
     def find_neighbors(self, node):
-        neighbors = [(node[0] + connection[0], node[1] + connection[1]) for connection in self.connections]
+        neighbors = [(node[0] + direction[0], node[1] + direction[1]) for direction in self.directions]
         if (node[0] + node[1]) % 2:
             neighbors.reverse()
-        #neighbors = filter(self.collide_with_walls, neighbors)
         neighbors = [node for node in neighbors if not self.collide_with_walls(node)]
         return neighbors
 
-    def breadth_first_search(self, player):
-        start = (self.x, self.y)
-        frontier = deque()
-        frontier.append(start)
-        path = {}
-        # path[start] = None
-        while len(frontier) > 0:
-            current = frontier.popleft()
-            if current == player:
-                break
-            for next in self.find_neighbors(current):
-                if next not in path:
-                    frontier.append(next)
-                    # path[next] = current - next
-                    path[next] = (current[0] - next[0], current[1] - next[1])
-        return path
+    # def breadth_first_search(self, player):
+    #     start = (self.x, self.y)
+    #     frontier = deque()
+    #     frontier.append(start)
+    #     path = {}
+    #     while len(frontier) > 0:
+    #         current = frontier.popleft()
+    #         if current == player:
+    #             break
+    #         for next in self.find_neighbors(current):
+    #             if next not in path:
+    #                 frontier.append(next)
+    #                 path[next] = (current[0] - next[0], current[1] - next[1])
+    #     return path
+
+    def breadth_first_search(self, start, end, path=[], exclude=[]):
+        if start == end:
+            return path
+
+        neighbors_d = {}
+        
+        neighbors = self.find_neighbors(start)
+        for to_remove in exclude:
+            if to_remove in neighbors:
+                neighbors.remove(to_remove)
+
+        for neighbor in neighbors:
+            # if len(path) > 0 and neighbors == path[-1]:
+            #     continue
+            if neighbor in path:
+                continue
+            d = abs(neighbor[0] - end[0]) + abs(neighbor[1] - end[1])
+            neighbors_d[neighbor] = d
+        min_d = min(neighbors_d, key=neighbors_d.get)
+        print("Possible neighbors: {}".format(neighbors_d))
+
+        path.append(min_d)
+        return self.breadth_first_search(min_d, end, path)
 
     def move_towards_player(self, player):
-        path = self.breadth_first_search(player)
         current = (self.x, self.y)
-        next = path[current]
-        print(player)
-        print(current)
-        print(path)
-        print(next)
-        if next:
-            self.x += next[0]
-            self.y += next[1]
 
+        print("Player: {}, Mob: {}".format(player, current))
+
+        path = self.breadth_first_search(current, player, path=[])
+        if len(path) > 0:
+            next = path[0]
+            if not (next[0] == player[0] and next[1] == player[1]):
+                self.x = path[0][0]
+                self.y = path[0][1]
     
 
 #    def move_towards_player(self, player_x, player_y):
