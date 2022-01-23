@@ -18,6 +18,7 @@ class Player(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.direction = Direction.DOWN
         self.game = game
+        self.moves = 0
         self.image_directions = {
             Direction.UP: pg.image.load("assets/up.png"),
             Direction.DOWN: pg.image.load("assets/down.png"),
@@ -37,6 +38,7 @@ class Player(pg.sprite.Sprite):
             self.y += dy
             self.direction = direction
             self.image = self.image_directions[direction]
+            self.moves += 1
 
     def collide_with_walls(self, dx=0, dy=0):
         for wall in self.game.walls:
